@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<body>
+<canvas id="c192" width="192" height="192"></canvas>
+<canvas id="c512" width="512" height="512"></canvas>
+<script>
+function drawIcon(id, size) {
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  const s = size;
+
+  // Background
+  const grad = ctx.createLinearGradient(0,0,s,s);
+  grad.addColorStop(0,'#1565C0'); grad.addColorStop(1,'#1976D2');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(0,0,s,s, s*0.22);
+  ctx.fill();
+
+  // Two eye outlines
+  const ew = s*0.28, eh = s*0.18, cy = s*0.42;
+  const lx = s*0.3, rx = s*0.7;
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = s*0.035;
+
+  [lx, rx].forEach(ex => {
+    ctx.beginPath(); ctx.ellipse(ex, cy, ew/2, eh/2, 0, 0, Math.PI*2); ctx.stroke();
+  });
+
+  // Pupils: exo = outward
+  const lp = s*0.22, rp = s*0.78;
+  ctx.fillStyle = 'white';
+  [lp, rp].forEach(px => {
+    ctx.beginPath(); ctx.arc(px, cy, s*0.055, 0, Math.PI*2); ctx.fill();
+  });
+
+  // Prism symbol below
+  const py = s*0.7, pw = s*0.35, ph = s*0.18;
+  ctx.beginPath();
+  ctx.moveTo(s/2, py - ph/2);
+  ctx.lineTo(s/2 + pw/2, py + ph/2);
+  ctx.lineTo(s/2 - pw/2, py + ph/2);
+  ctx.closePath();
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = s*0.03;
+  ctx.stroke();
+
+  // Delta symbol
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = `bold ${s*0.11}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('△', s/2, py);
+}
+
+drawIcon('c192', 192);
+drawIcon('c512', 512);
+
+// Download both
+setTimeout(() => {
+  ['c192','c512'].forEach((id,i) => {
+    const a = document.createElement('a');
+    a.href = document.getElementById(id).toDataURL('image/png');
+    a.download = i===0 ? 'icon-192.png' : 'icon-512.png';
+    a.click();
+  });
+}, 300);
+</script>
+</body>
+</html>

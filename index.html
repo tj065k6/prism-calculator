@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="稜鏡計算">
+  <meta name="theme-color" content="#1976D2">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>稜鏡計算工具</title>
+  <style>
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #f0f4ff;
+    }
+
+    /* ── Pages ── */
+    .pages { flex: 1; overflow: hidden; position: relative; }
+    .page {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .page.active { opacity: 1; pointer-events: all; }
+
+    /* ── Header ── */
+    .header {
+      padding: calc(var(--safe-top) + 12px) 20px 16px;
+      flex-shrink: 0;
+    }
+    .header h1 { color: white; font-size: 21px; font-weight: 800; }
+    .header .sub { color: rgba(255,255,255,0.82); font-size: 13px; margin-top: 2px; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.22);
+      color: white;
+      font-size: 11px; font-weight: 700;
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-top: 8px;
+    }
+
+    /* ── Scroll area ── */
+    .scroll { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
+
+    /* ── Info tip ── */
+    .tip {
+      background: #fff8e1;
+      border-left: 3px solid #ffa000;
+      border-radius: 0 10px 10px 0;
+      padding: 10px 14px;
+      font-size: 12px; color: #6d4c41; line-height: 1.65;
+    }
+
+    /* ── Formula ── */
+    .formula {
+      background: white;
+      border-radius: 14px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .formula .fl { font-size: 9px; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 5px; }
+    .formula .ft { font-size: 14px; font-weight: 700; font-style: italic; color: #111; }
+
+    /* ── Input card ── */
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .field label { display: block; font-size: 12px; font-weight: 700; color: #444; margin-bottom: 6px; }
+    .input-row {
+      display: flex; align-items: center;
+      border-radius: 12px;
+      border: 2px solid;
+      background: #f0f4ff;
+      overflow: hidden;
+    }
+    .input-row input {
+      flex: 1; border: none; background: transparent;
+      padding: 12px 14px;
+      font-size: 22px; font-weight: 800; color: #111;
+      outline: none; min-width: 0;
+    }
+    .input-row .unit { padding: 0 14px; font-size: 16px; font-weight: 800; flex-shrink: 0; }
+
+    /* ── Button ── */
+    .btn {
+      width: 100%; border: none; border-radius: 14px;
+      padding: 15px; font-size: 16px; font-weight: 800;
+      color: white; cursor: pointer; letter-spacing: 0.5px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+      transition: transform 0.1s, opacity 0.1s;
+    }
+    .btn:active { transform: scale(0.97); opacity: 0.9; }
+
+    /* ── Result ── */
+    .result {
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+    .result .rl { color: rgba(255,255,255,0.78); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .result .rv { color: white; font-size: 52px; font-weight: 900; line-height: 1; }
+    .result .ru { color: rgba(255,255,255,0.68); font-size: 13px; font-weight: 600; margin-top: 4px; }
+    .result .rh { color: rgba(255,255,255,0.55); font-size: 11px; margin-top: 6px; }
+
+    /* ── Tab bar ── */
+    .tabbar {
+      display: flex;
+      background: white;
+      border-top: 1px solid #e0e6f0;
+      padding-bottom: var(--safe-bottom);
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; padding: 8px 4px 8px;
+      gap: 3px; border: none; background: none;
+      cursor: pointer; position: relative;
+    }
+    .tab::before {
+      content: ''; position: absolute;
+      top: 0; left: 25%; right: 25%;
+      height: 3px; border-radius: 0 0 3px 3px;
+      background: transparent; transition: background 0.2s;
+    }
+    .tab.active::before { background: var(--tab-color); }
+    .tab canvas { display: block; }
+    .tab span { font-size: 10px; font-weight: 700; color: #aaa; line-height: 1; }
+    .tab.active span { color: var(--tab-color); }
+
+    /* Color themes */
+    .p1 { background: #f0f4ff; } .h1 { background: #1976d2; } .c1 { color: #1976d2; } .b1 { border-color: #bbdefb; } .g1 { background: linear-gradient(140deg,#0d47a1,#1976d2); }
+    .p2 { background: #f0fff4; } .h2 { background: #388e3c; } .c2 { color: #388e3c; } .b2 { border-color: #c8e6c9; } .g2 { background: linear-gradient(140deg,#1b5e20,#388e3c); }
+    .p3 { background: #f9f0ff; } .h3 { background: #7b1fa2; } .c3 { color: #7b1fa2; } .b3 { border-color: #e1bee7; } .g3 { background: linear-gradient(140deg,#4a148c,#7b1fa2); }
+  </style>
+</head>
+<body>
+
+<div class="pages">
+
+  <!-- Page 1: Sheard's -->
+  <div class="page p1 active" id="page0">
+    <div class="header h1">
+      <h1>Sheard's Criterion</h1>
+      <div class="sub">謝爾德氏準則</div>
+      <span class="badge">外斜位 Exophoria</span>
+    </div>
+    <div class="scroll">
+      <div class="tip">適用於外隱斜 (Exophoria)<br>目標：聚散儲備量 ≥ 斜位量 × 2/3</div>
+      <div class="formula">
+        <div class="fl c1">FORMULA 公式</div>
+        <div class="ft">P = (2 × Phoria − BO Break) ÷ 3</div>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label>斜位量 Phoria — Von Graefe</label>
+          <div class="input-row b1">
+            <input type="number" inputmode="decimal" id="s1" placeholder="0.00">
+            <span class="unit c1">△</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>BO 破裂點 Break Point</label>
+          <div class="input-row b1">
+            <input type="number" inputmode="decimal" id="s2" placeholder="0.00">
+            <span class="unit c1">△</span>
+          </div>
+        </div>
+        <button class="btn h1" onclick="calc(0)">計算  Calculate</button>
+      </div>
+      <div class="result g1">
+        <div class="rl">需要稜鏡量 REQUIRED PRISM</div>
+        <div class="rv" id="r0">—</div>
+        <div class="ru">Prism Diopters △</div>
+        <div class="rh">Base Out 方向</div>
+      </div>
+      <div style="height:4px"></div>
+    </div>
+  </div>
+
+  <!-- Page 2: Percival's -->
+  <div class="page p2" id="page1">
+    <div class="header h2">
+      <h1>Percival's Criterion</h1>
+      <div class="sub">柏希法氏準則</div>
+      <span class="badge">內斜位 Esophoria</span>
+    </div>
+    <div class="scroll">
+      <div class="tip">適用於內隱斜 (Esophoria)<br>目標：將斜位置於聚散範圍中間 1/3</div>
+      <div class="formula">
+        <div class="fl c2">FORMULA 公式</div>
+        <div class="ft">P = (1/3) × G − (2/3) × L</div>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label>BO 破裂點 (G — 較大值 Larger Range)</label>
+          <div class="input-row b2">
+            <input type="number" inputmode="decimal" id="p1" placeholder="0.00">
+            <span class="unit c2">△</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>BI 破裂點 (L — 較小值 Smaller Range)</label>
+          <div class="input-row b2">
+            <input type="number" inputmode="decimal" id="p2" placeholder="0.00">
+            <span class="unit c2">△</span>
+          </div>
+        </div>
+        <button class="btn h2" onclick="calc(1)">計算  Calculate</button>
+      </div>
+      <div class="result g2">
+        <div class="rl">需要稜鏡量 REQUIRED PRISM</div>
+        <div class="rv" id="r1">—</div>
+        <div class="ru">Prism Diopters △</div>
+        <div class="rh">正值 BO＋ ／ 負值 BI−</div>
+      </div>
+      <div style="height:4px"></div>
+    </div>
+  </div>
+
+  <!-- Page 3: 1:1 Rule -->
+  <div class="page p3" id="page2">
+    <div class="header h3">
+      <h1>1:1 Rule</h1>
+      <div class="sub">1比1法則</div>
+      <span class="badge">內斜位 Esophoria</span>
+    </div>
+    <div class="scroll">
+      <div class="tip">適用於內隱斜 (Esophoria)<br>目標：斜位量 = 對側聚散還原點</div>
+      <div class="formula">
+        <div class="fl c3">FORMULA 公式</div>
+        <div class="ft">P = (BI Phoria − BO Recovery) ÷ 2</div>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label>BI 斜位量 BI Phoria</label>
+          <div class="input-row b3">
+            <input type="number" inputmode="decimal" id="o1" placeholder="0.00">
+            <span class="unit c3">△</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>BO 還原點 BO Recovery Point</label>
+          <div class="input-row b3">
+            <input type="number" inputmode="decimal" id="o2" placeholder="0.00">
+            <span class="unit c3">△</span>
+          </div>
+        </div>
+        <button class="btn h3" onclick="calc(2)">計算  Calculate</button>
+      </div>
+      <div class="result g3">
+        <div class="rl">需要稜鏡量 REQUIRED PRISM</div>
+        <div class="rv" id="r2">—</div>
+        <div class="ru">Prism Diopters △</div>
+        <div class="rh">Base In 方向</div>
+      </div>
+      <div style="height:4px"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Tab Bar -->
+<div class="tabbar">
+  <button class="tab active" id="tab0" style="--tab-color:#1976d2" onclick="goTo(0)">
+    <canvas id="eye0" width="40" height="24"></canvas>
+    <span>Sheard's</span>
+  </button>
+  <button class="tab" id="tab1" style="--tab-color:#388e3c" onclick="goTo(1)">
+    <canvas id="eye1" width="40" height="24"></canvas>
+    <span>Percival's</span>
+  </button>
+  <button class="tab" id="tab2" style="--tab-color:#7b1fa2" onclick="goTo(2)">
+    <canvas id="bal" width="28" height="24"></canvas>
+    <span>1:1 Rule</span>
+  </button>
+</div>
+
+<script>
+// ── Eye icon drawing ──────────────────────────────
+const COLORS = ['#1976d2','#388e3c','#7b1fa2'];
+let current = 0;
+
+function drawEye(id, isExo, isActive, color) {
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height, cy = h / 2;
+  ctx.clearRect(0, 0, w, h);
+  const col = isActive ? color : '#aaa';
+
+  // Eye outlines
+  [[w*0.25, cy], [w*0.75, cy]].forEach(([ex, ey]) => {
+    ctx.beginPath(); ctx.ellipse(ex, ey, 8, 6, 0, 0, Math.PI*2);
+    ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.stroke();
+  });
+
+  // Pupils
+  const lx = isExo ? w*0.18 : w*0.32;
+  const rx = isExo ? w*0.82 : w*0.68;
+  [lx, rx].forEach(px => {
+    ctx.beginPath(); ctx.arc(px, cy, 3.2, 0, Math.PI*2);
+    ctx.fillStyle = col; ctx.fill();
+    ctx.beginPath(); ctx.arc(px-0.5, cy-0.8, 1.1, 0, Math.PI*2);
+    ctx.fillStyle = 'white'; ctx.fill();
+  });
+
+  // Arrows
+  if (isActive) {
+    ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
+    if (isExo) {
+      [[2.5, w-2.5]].forEach(([x1, x2]) => {
+        const dx = x1 < w/2 ? 3 : -3;
+        ctx.beginPath(); ctx.moveTo(x1,cy); ctx.lineTo(x1+dx,cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x1,cy); ctx.lineTo(x1+dx*0.8,cy-2.5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x1,cy); ctx.lineTo(x1+dx*0.8,cy+2.5); ctx.stroke();
+      });
+      const x2 = w-2.5;
+      ctx.beginPath(); ctx.moveTo(x2,cy); ctx.lineTo(x2-3,cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2,cy); ctx.lineTo(x2-2.4,cy-2.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2,cy); ctx.lineTo(x2-2.4,cy+2.5); ctx.stroke();
+    } else {
+      const mid = w/2;
+      [[mid-2, -1],[mid+2, 1]].forEach(([x, dir]) => {
+        ctx.beginPath(); ctx.moveTo(x,cy); ctx.lineTo(x+dir*3.5,cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+dir*3.5,cy); ctx.lineTo(x+dir*1.2,cy-2.5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+dir*3.5,cy); ctx.lineTo(x+dir*1.2,cy+2.5); ctx.stroke();
+      });
+    }
+  }
+}
+
+function drawBalance(id, isActive, color) {
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.clearRect(0,0,w,h);
+  const col = isActive ? color : '#aaa';
+  ctx.strokeStyle = col; ctx.fillStyle = col;
+  ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+  // Pole
+  ctx.beginPath(); ctx.moveTo(w/2,3); ctx.lineTo(w/2,h-4); ctx.stroke();
+  // Beam
+  ctx.beginPath(); ctx.moveTo(4,9); ctx.lineTo(w-4,9); ctx.stroke();
+  // Left pan
+  ctx.beginPath(); ctx.moveTo(6,9); ctx.lineTo(4,h-3); ctx.lineTo(10,h-3); ctx.closePath(); ctx.stroke();
+  // Right pan
+  ctx.beginPath(); ctx.moveTo(w-6,9); ctx.lineTo(w-10,h-3); ctx.lineTo(w-4,h-3); ctx.closePath(); ctx.stroke();
+  // Center dot
+  ctx.beginPath(); ctx.arc(w/2,6,2,0,Math.PI*2); ctx.fill();
+}
+
+function renderTabs() {
+  drawEye('eye0', true,  current===0, COLORS[0]);
+  drawEye('eye1', false, current===1, COLORS[1]);
+  drawBalance('bal', current===2, COLORS[2]);
+  [0,1,2].forEach(i => {
+    document.getElementById('tab'+i).classList.toggle('active', i===current);
+    document.getElementById('page'+i).classList.toggle('active', i===current);
+  });
+}
+
+function goTo(i) { current = i; renderTabs(); }
+renderTabs();
+
+// ── Calculations ──────────────────────────────────
+function calc(method) {
+  let result;
+  if (method === 0) {
+    const p = parseFloat(document.getElementById('s1').value);
+    const b = parseFloat(document.getElementById('s2').value);
+    if (isNaN(p) || isNaN(b)) { alert('請輸入所有數值'); return; }
+    result = (2*p - b) / 3;
+  } else if (method === 1) {
+    const g = parseFloat(document.getElementById('p1').value);
+    const l = parseFloat(document.getElementById('p2').value);
+    if (isNaN(g) || isNaN(l)) { alert('請輸入所有數值'); return; }
+    result = g/3 - l*2/3;
+  } else {
+    const p = parseFloat(document.getElementById('o1').value);
+    const r = parseFloat(document.getElementById('o2').value);
+    if (isNaN(p) || isNaN(r)) { alert('請輸入所有數值'); return; }
+    result = (p - r) / 2;
+  }
+  document.getElementById('r'+method).textContent = result.toFixed(2);
+}
+
+// ── Service Worker ────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
