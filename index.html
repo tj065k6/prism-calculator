@@ -85,19 +85,30 @@
     }
     .field label { display: block; font-size: 12px; font-weight: 700; color: #444; margin-bottom: 6px; }
     .input-row {
-      display: flex; align-items: center;
+      display: flex; align-items: stretch;
       border-radius: 12px;
       border: 2px solid;
       background: #f0f4ff;
       overflow: hidden;
     }
+    .sign-btn {
+      border: none;
+      background: rgba(0,0,0,0.04);
+      font-size: 18px;
+      font-weight: 900;
+      padding: 0 14px;
+      flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+    }
+    .sign-btn:active { background: rgba(0,0,0,0.1); }
     .input-row input {
       flex: 1; border: none; background: transparent;
       padding: 12px 14px;
       font-size: 22px; font-weight: 800; color: #111;
       outline: none; min-width: 0;
     }
-    .input-row .unit { padding: 0 14px; font-size: 16px; font-weight: 800; flex-shrink: 0; }
+    .input-row .unit { padding: 0 14px; font-size: 16px; font-weight: 800; flex-shrink: 0; display:flex; align-items:center; }
 
     /* ── Button ── */
     .btn {
@@ -118,7 +129,7 @@
     .result .rl { color: rgba(255,255,255,0.78); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
     .result .rv { color: white; font-size: 52px; font-weight: 900; line-height: 1; }
     .result .ru { color: rgba(255,255,255,0.68); font-size: 13px; font-weight: 600; margin-top: 4px; }
-    .result .rh { color: rgba(255,255,255,0.55); font-size: 11px; margin-top: 6px; }
+    .result .rh { color: rgba(255,255,255,0.85); font-size: 12px; margin-top: 6px; font-weight: 700; min-height: 16px; }
 
     /* ── Tab bar ── */
     .tabbar {
@@ -163,7 +174,7 @@
       <span class="badge">外斜位 Exophoria</span>
     </div>
     <div class="scroll">
-      <div class="tip">適用於外隱斜 (Exophoria)<br>目標：聚散儲備量 ≥ 斜位量 × 2/3</div>
+      <div class="tip">適用於外隱斜 (Exophoria)<br>目標：聚散儲備量 ≥ 斜位量 × 2/3<br>若欄位需輸入負值（例如以BI方向為負），可點選欄位左側「±」切換正負號。</div>
       <div class="formula">
         <div class="fl c1">FORMULA 公式</div>
         <div class="ft">P = (2 × Phoria − BO Break) ÷ 3</div>
@@ -172,6 +183,7 @@
         <div class="field">
           <label>斜位量 Phoria — Von Graefe</label>
           <div class="input-row b1">
+            <button type="button" class="sign-btn c1" onclick="toggleSign('s1')">±</button>
             <input type="number" inputmode="decimal" id="s1" placeholder="0.00">
             <span class="unit c1">△</span>
           </div>
@@ -179,6 +191,7 @@
         <div class="field">
           <label>BO 破裂點 Break Point</label>
           <div class="input-row b1">
+            <button type="button" class="sign-btn c1" onclick="toggleSign('s2')">±</button>
             <input type="number" inputmode="decimal" id="s2" placeholder="0.00">
             <span class="unit c1">△</span>
           </div>
@@ -189,7 +202,7 @@
         <div class="rl">需要稜鏡量 REQUIRED PRISM</div>
         <div class="rv" id="r0">—</div>
         <div class="ru">Prism Diopters △</div>
-        <div class="rh">Base Out 方向</div>
+        <div class="rh" id="rh0">請輸入數值後計算</div>
       </div>
       <div style="height:4px"></div>
     </div>
@@ -203,7 +216,7 @@
       <span class="badge">內斜位 Esophoria</span>
     </div>
     <div class="scroll">
-      <div class="tip">適用於內隱斜 (Esophoria)<br>目標：將斜位置於聚散範圍中間 1/3</div>
+      <div class="tip">適用於內隱斜 (Esophoria)<br>目標：將斜位置於聚散範圍中間 1/3（此準則不需輸入斜位值）<br>若欄位需輸入負值，可點選欄位左側「±」切換正負號。</div>
       <div class="formula">
         <div class="fl c2">FORMULA 公式</div>
         <div class="ft">P = (1/3) × G − (2/3) × L</div>
@@ -212,6 +225,7 @@
         <div class="field">
           <label>BO 破裂點 (G — 較大值 Larger Range)</label>
           <div class="input-row b2">
+            <button type="button" class="sign-btn c2" onclick="toggleSign('p1')">±</button>
             <input type="number" inputmode="decimal" id="p1" placeholder="0.00">
             <span class="unit c2">△</span>
           </div>
@@ -219,6 +233,7 @@
         <div class="field">
           <label>BI 破裂點 (L — 較小值 Smaller Range)</label>
           <div class="input-row b2">
+            <button type="button" class="sign-btn c2" onclick="toggleSign('p2')">±</button>
             <input type="number" inputmode="decimal" id="p2" placeholder="0.00">
             <span class="unit c2">△</span>
           </div>
@@ -229,7 +244,7 @@
         <div class="rl">需要稜鏡量 REQUIRED PRISM</div>
         <div class="rv" id="r1">—</div>
         <div class="ru">Prism Diopters △</div>
-        <div class="rh">正值 BO＋ ／ 負值 BI−</div>
+        <div class="rh" id="rh1">請輸入數值後計算</div>
       </div>
       <div style="height:4px"></div>
     </div>
@@ -239,26 +254,28 @@
   <div class="page p3" id="page2">
     <div class="header h3">
       <h1>1:1 Rule</h1>
-      <div class="sub">1比1法則</div>
+      <div class="sub">1比1法則（Saladin）</div>
       <span class="badge">內斜位 Esophoria</span>
     </div>
     <div class="scroll">
-      <div class="tip">適用於內隱斜 (Esophoria)<br>目標：斜位量 = 對側聚散還原點</div>
+      <div class="tip">適用於內隱斜 (Esophoria)<br>目標：BI 聚散回饋值應至少等於內斜位量<br>若欄位需輸入負值，可點選欄位左側「±」切換正負號。</div>
       <div class="formula">
         <div class="fl c3">FORMULA 公式</div>
-        <div class="ft">P = (BI Phoria − BO Recovery) ÷ 2</div>
+        <div class="ft">P = (Esophoria − BI Recovery) ÷ 2</div>
       </div>
       <div class="card">
         <div class="field">
-          <label>BI 斜位量 BI Phoria</label>
+          <label>內斜位量 Esophoria</label>
           <div class="input-row b3">
+            <button type="button" class="sign-btn c3" onclick="toggleSign('o1')">±</button>
             <input type="number" inputmode="decimal" id="o1" placeholder="0.00">
             <span class="unit c3">△</span>
           </div>
         </div>
         <div class="field">
-          <label>BO 還原點 BO Recovery Point</label>
+          <label>BI 還原點 BI Recovery Point</label>
           <div class="input-row b3">
+            <button type="button" class="sign-btn c3" onclick="toggleSign('o2')">±</button>
             <input type="number" inputmode="decimal" id="o2" placeholder="0.00">
             <span class="unit c3">△</span>
           </div>
@@ -269,7 +286,7 @@
         <div class="rl">需要稜鏡量 REQUIRED PRISM</div>
         <div class="rv" id="r2">—</div>
         <div class="ru">Prism Diopters △</div>
-        <div class="rh">Base In 方向</div>
+        <div class="rh" id="rh2">請輸入數值後計算</div>
       </div>
       <div style="height:4px"></div>
     </div>
@@ -294,6 +311,19 @@
 </div>
 
 <script>
+// ── Sign toggle for inputs (mobile decimal keypads often lack a minus key) ──
+function toggleSign(id) {
+  const el = document.getElementById(id);
+  if (el.value === '' || el.value === '-') {
+    el.value = el.value === '-' ? '' : '-';
+    el.focus();
+    return;
+  }
+  const v = parseFloat(el.value);
+  if (isNaN(v)) return;
+  el.value = (-v).toString();
+}
+
 // ── Eye icon drawing ──────────────────────────────
 const COLORS = ['#1976d2','#388e3c','#7b1fa2'];
 let current = 0;
@@ -381,25 +411,56 @@ function goTo(i) { current = i; renderTabs(); }
 renderTabs();
 
 // ── Calculations ──────────────────────────────────
+// All formulas accept negative inputs (e.g. BI values entered as negative
+// numbers) and compute the correct signed result; direction (BI/BO) is
+// then derived from the sign of the result rather than hard-coded.
 function calc(method) {
-  let result;
+  let result, dirText;
+
   if (method === 0) {
+    // Sheard's Criterion (Exophoria)
+    // P = (2 × Phoria − BO Break) ÷ 3
     const p = parseFloat(document.getElementById('s1').value);
     const b = parseFloat(document.getElementById('s2').value);
     if (isNaN(p) || isNaN(b)) { alert('請輸入所有數值'); return; }
-    result = (2*p - b) / 3;
+    result = (2 * p - b) / 3;
+    if (result > 0) {
+      dirText = Math.abs(result).toFixed(2) + ' △ Base In (BI) 方向';
+    } else {
+      dirText = '已達 Sheard\'s 準則，無需處方稜鏡';
+      result = 0;
+    }
   } else if (method === 1) {
+    // Percival's Criterion (Esophoria) — does not require phoria itself
+    // P = (1/3) × G − (2/3) × L
     const g = parseFloat(document.getElementById('p1').value);
     const l = parseFloat(document.getElementById('p2').value);
     if (isNaN(g) || isNaN(l)) { alert('請輸入所有數值'); return; }
-    result = g/3 - l*2/3;
+    result = g / 3 - l * 2 / 3;
+    if (result > 0) {
+      dirText = Math.abs(result).toFixed(2) + ' △ Base Out (BO) 方向';
+    } else if (result < 0) {
+      dirText = Math.abs(result).toFixed(2) + ' △ Base In (BI) 方向';
+    } else {
+      dirText = '已在中間 1/3 範圍內，無需處方';
+    }
   } else {
+    // 1:1 Rule (Esophoria, Saladin)
+    // P = (Esophoria − BI Recovery) ÷ 2
     const p = parseFloat(document.getElementById('o1').value);
     const r = parseFloat(document.getElementById('o2').value);
     if (isNaN(p) || isNaN(r)) { alert('請輸入所有數值'); return; }
     result = (p - r) / 2;
+    if (result > 0) {
+      dirText = Math.abs(result).toFixed(2) + ' △ Base Out (BO) 方向';
+    } else {
+      dirText = '已達 1:1 準則，無需處方稜鏡';
+      result = 0;
+    }
   }
-  document.getElementById('r'+method).textContent = result.toFixed(2);
+
+  document.getElementById('r' + method).textContent = Math.abs(result).toFixed(2);
+  document.getElementById('rh' + method).textContent = dirText;
 }
 
 // ── Service Worker ────────────────────────────────
